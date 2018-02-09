@@ -1,0 +1,8 @@
+#zk global variables
+
+java_home: /export/servers/jdk1.7.0_79
+zk_home: /export/servers/zookeeper
+data_dir: /export/servers/zookeeper/data
+log_dir: /export/servers/zookeeper/log
+base_dir: /export/servers
+

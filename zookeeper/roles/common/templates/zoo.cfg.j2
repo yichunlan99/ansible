@@ -1,0 +1,11 @@
+tickTime=2000
+initLimit=10
+syncLimit=5
+clientPort=2181
+autopurge.snapRetainCount=500 
+autopurge.purgeInterval=24
+dataDir={{data_dir}}
+dataLogDir={{log_dir}}
+server.1={{hostvars[groups.zookeeper.0].ansible_ssh_host}}:2888:3888
+server.2={{hostvars[groups.zookeeper.1].ansible_ssh_host}}:2888:3888
+server.3={{hostvars[groups.zookeeper.2].ansible_ssh_host}}:2888:3888

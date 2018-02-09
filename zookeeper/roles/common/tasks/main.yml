@@ -1,0 +1,55 @@
+---
+
+#拷贝jdk安装包
+- name: copy java package
+  copy:
+    dest: "{{base_dir}}/jdk-7u79-linux-x64.gz"
+    src: jdk-7u79-linux-x64.gz.j2  
+
+#安装jdk
+- name: decompress java
+  shell: tar xvf  "{{base_dir}}"/jdk-7u79-linux-x64.gz -C /export/servers/
+
+#解压软件包到服务器
+- name: unzip zookeeper-3.4.6.tar.gz
+  unarchive:
+    src: zookeeper-3.4.6.tar.gz
+    dest: "{{base_dir}}"
+
+- name: set zookeeper directory
+  raw: rm -rf "{{zk_home}}" && mv "{{base_dir}}"/zookeeper-3.4.6 "{{zk_home}}"
+
+#拷贝zk配置文件
+- name: copy zk config file
+  template:
+    dest: "{{zk_home}}/conf/zoo.cfg"
+    src: zoo.cfg.j2
+
+#创建zk数据目录和日志目录
+- name: create zk data directory
+  file:
+    path: "{{zk_home}}/data"
+    state: directory
+
+- name: create zk log directory
+  file:
+    path: "{{zk_home}}/log"
+    state: directory
+
+#拷贝myid
+- name: copy zk myid file
+  template:
+    dest: "{{zk_home}}/data/myid"
+    src: myid.j2
+#拷贝zookeeper启动脚本
+- name: copy zk start script
+  template:
+    dest: "{{zk_home}}/bin/control"
+    src: startzk.sh.j2
+    mode: 755
+#启动zookeeper
+- name: start zookeeper
+  shell: "{{zk_home}}/bin/control start"
+#后续清理
+- name: cls zookeeper-3.4.6.tar.gz file
+  shell: rm -rf "{{base_dir}}"/zookeeper-3.4.6.tar.gz
