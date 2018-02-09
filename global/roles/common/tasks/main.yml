@@ -1,0 +1,148 @@
+---
+
+#创建部署目录
+- name: Create the deployment directory
+  file:
+    mode: 755
+    path: /export/servers
+    state: directory 
+
+
+#安装基础软件
+- name: init package
+  yum: name={{item}}  state=present
+  with_items: 
+    - epel-release
+    - initscripts
+    - unzip
+    - gcc
+    - gcc-c++
+    - supervisor
+    - libselinux-python
+    - ntpdate
+    - psmisc
+    - redhat-lsb-core
+    - figlet
+#安装日志切割工具cronolog
+- name: install cronolog tools
+  copy:
+    dest: /usr/local/sbin
+    src: cronolog
+    mode: 755
+
+#赋予rc.local执行权限
+- name: Set rc.local execution permission
+  file: 
+     mode: 744
+     path: /etc/rc.d/rc.local
+
+#禁用selinux
+- name: disabled SELinux
+  selinux: 
+    state: disabled
+
+#禁用防火墙
+- name: disable firewalld
+  service:
+    name: firewalld
+    state: stopped
+
+#禁用chronyd
+- name: disable chronyd
+  service:
+    name: chronyd
+    state: stopped
+
+#使用ntp同步时间
+- name: Synchronization server time
+  shell: ntpdate ntp1.aliyun.com
+
+#设置服务器欢迎页
+- name: copy motd.sh
+  copy: dest=/etc/cron.daily/ src=motd.sh
+
+- name: Set motd.sh execution permission
+  file:
+    mode: 755
+    owner: root
+    path: /etc/cron.daily/motd.sh
+
+- name: Execute the motd.sh script.
+  shell: sh /etc/cron.daily/motd.sh
+
+- name: set motd cron 
+  cron:
+    name: Regularly update the welcome page
+    minute: 59
+    hour: 23
+    day: *
+    weekday: *
+    job: /etc/cron.daily/motd.sh
+
+#设置PS1
+- name: copy setps1.sh
+  copy: dest=/tmp/ src=setps1.sh
+
+- name: set /etc/bashrc
+  shell: cat /tmp/setps1.sh >> /etc/bashrc
+
+- name: source /etc/bashrc
+  shell: source /etc/bashrc
+
+- name: delete temp file setps1
+  file:
+    path: /tmp/setps1.sh
+    state: absent
+
+#优化内核参数
+- name: backup sysctl.conf
+  shell: mv /etc/sysctl.conf /etc/sysctl.conf.bak
+
+- name: copy sysctl.conf
+  copy:
+    dest: /etc/ 
+    src: sysctl.conf
+
+- name: Enable new kernel parameters
+  shell: sysctl -p
+
+#修改shell启动进程所占用的资源
+- name: change ulimit
+  copy:
+    src: limits.conf
+    dest: /etc/security/limits.conf
+    backup: yes 
+    owner: root
+    group: root
+    mode: 644
+
+#优化进程的最大数目可通过ulimit – u修改临时生效
+- name: change 90-nproc.conf
+  copy:
+    src: 90-nproc.conf
+    dest: /etc/security/limits.d/90-nproc.conf
+    owner: root
+    group: root
+    mode: 644
+
+#优化打开文件的最大数目(也包含打开的SOCKET数量)
+- name: change 90-nofile.conf
+  copy:
+    src: 90-nofile.conf
+    dest: /etc/security/limits.d/90-nofile.conf
+    owner: root
+    group: root
+    mode: 644
+
+#优化最大栈大小
+- name: change 90-stack.conf
+  copy:
+    src: 90-stack.conf
+    dest: /etc/security/limits.d/90-stack.conf
+    owner: root
+    group: root
+    mode: 644
+
+
+
+
